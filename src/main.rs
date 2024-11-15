@@ -1,5 +1,5 @@
 use std::fs;
-use mlua::{prelude::*, UserData, FromLua};
+use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function};
 use serde::{Deserialize, Serialize};
 
 #[derive(
@@ -9,30 +9,67 @@ use serde::{Deserialize, Serialize};
     Debug,
     FromLua
 )]
-enum Kind {
-    Cat,
-    Dog,
-    Fish,
+struct Template {
+    components: Vec<isize>,
 }
 
-impl UserData for Kind {}
+impl Template {
+    pub fn new() -> Self {
+        Self {
+            components: Vec::new(),
+        }
+    }
+}
+
+impl UserData for Template {
+    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method_mut("add", |_, this, new: isize| {
+            this.components.push(new);
+            Ok(Self::new())
+        });
+        methods.add_method("debug", |_, this, ()| {
+            println!("{:?}", this);
+            Ok(())
+        });
+    }
+}
+
+#[derive(
+    Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    FromLua
+)]
+struct Library;
+
+impl UserData for Library {
+    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_function("hello", |_, ()| {
+            println!("Hello, world!");
+            Ok(())
+        });
+    }
+}
 
 fn main() -> LuaResult<()> {
-    let filename = "test.lua";
+    let filename = "template.lua";
     if let Ok(source) = fs::read_to_string(filename) {
+        // Create the Lua environment
         let lua = Lua::new();
         let globals = lua.globals();
 
-        //let thing = Kind::Fish;
-        //globals.set("thing", lua.create_ser_userdata(thing)?)?;
+        // Add our library table
+        let library = Library;
+        globals.set("library", library)?;
 
-        let result = lua.load(source).eval()?;
+        // Actually run the Lua script
+        lua.load(source).exec()?;
 
-        //let thing = globals.get::<Kind>("thing")?;
-        //println!("{:?}", thing);
-
-        let x = lua.from_value::<Kind>(result)?;
-        println!("{:?}", x);
+        // Evaluate its construct() function
+        let construct: Function = globals.get("construct")?;
+        let object = construct.call::<Template>(Template::new())?;
+        println!("{:?}", object);
     };
 
     Ok(())
