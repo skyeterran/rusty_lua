@@ -1,5 +1,5 @@
 use std::fs;
-use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function};
+use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function, AnyUserData};
 use serde::{Deserialize, Serialize};
 
 #[derive(

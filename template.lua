@@ -1,8 +1,7 @@
-print(library.hello())
-
 -- Construction function
-function construct(t)
-    t:add(420)
-    t:add(69)
-    return t
+function construct(self)
+    library.hello()
+    self:add(420)
+    self:add(69)
+    return self
 end
