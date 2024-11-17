@@ -72,7 +72,6 @@ pub fn construct_script<T: UserData + FromLua + Default>(path: &str) -> LuaResul
 
     // Evaluate its construct() function
     let construct: Function = globals.get("construct")?;
-    //let object = construct.call::<Template>(Template::new())?;
     construct.call::<()>(())?;
     let object: T = globals.get("self")?;
 
