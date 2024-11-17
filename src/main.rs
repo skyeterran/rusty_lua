@@ -1,21 +1,23 @@
 use std::fs;
-use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function, AnyUserData};
-use serde::{Deserialize, Serialize};
+use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(
     Serialize,
     Deserialize,
     Clone,
     Debug,
-    FromLua
+    FromLua,
 )]
 struct Template {
+    name: String,
     components: Vec<isize>,
 }
 
 impl Default for Template {
     fn default() -> Self {
         Self {
+            name: "None".to_string(),
             components: Vec::new(),
         }
     }
@@ -52,9 +54,8 @@ impl UserData for Library {
     }
 }
 
-pub fn construct_script<T: UserData + FromLua + Default>(path: &str) -> LuaResult<T> {
-    let filename = "template.lua";
-    let source = fs::read_to_string(filename).unwrap();
+pub fn construct_script<T: UserData + FromLua + Default + DeserializeOwned>(path: &str) -> LuaResult<T> {
+    let source = fs::read_to_string(path).unwrap();
 
     // Create the Lua environment
     let lua = Lua::new();
@@ -67,19 +68,15 @@ pub fn construct_script<T: UserData + FromLua + Default>(path: &str) -> LuaResul
     // Actually run the Lua script
     lua.load(source).exec()?;
 
-    // Add the template object
-    globals.set("self", Template::default())?;
-
-    // Evaluate its construct() function
+    // Evaluate its construct() function and get teh result
     let construct: Function = globals.get("construct")?;
-    construct.call::<()>(())?;
-    let object: T = globals.get("self")?;
+    let result: T = lua.from_value(construct.call(())?)?;
 
-    Ok(object)
+    Ok(result)
 }
 
 fn main() -> LuaResult<()> {
-    let result: Template = construct_script("template.lua")?;
+    let result: Template = construct_script("template.luau")?;
     println!("{:?}", result);
     Ok(())
 }
