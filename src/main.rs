@@ -1,6 +1,6 @@
 use std::fs;
 use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function, Value, Vector};
-use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize};
 
 #[derive(
     Serialize,
@@ -22,6 +22,22 @@ impl UserData for Library {
 
 #[derive(
     Serialize,
+    Deserialize,
+    Clone,
+    Debug,
+    FromLua,
+)]
+enum ObjectKind {
+    Human,
+    Alien,
+    Animal,
+    Other(String),
+}
+
+impl UserData for ObjectKind {}
+
+#[derive(
+    Serialize,
     Clone,
     Debug,
     FromLua,
@@ -30,6 +46,7 @@ struct Template {
     name: Option<String>,
     components: Vec<isize>,
     position: Vector,
+    kind: ObjectKind,
 }
 
 impl Default for Template {
@@ -38,6 +55,7 @@ impl Default for Template {
             name: None,
             components: Vec::new(),
             position: Vector::new(0.0, 0.0, 0.0),
+            kind: ObjectKind::Alien,
         }
     }
 }
@@ -57,6 +75,13 @@ impl UserData for Template {
         fields.add_field_method_set("position", |_, this, val: Value| {
             let Value::Vector(v) = val else { todo!() };
             this.position = v;
+            Ok(())
+        });
+        fields.add_field_method_get("kind", |lua, this| {
+            Ok(lua.create_userdata(this.kind.clone())?)
+        });
+        fields.add_field_method_set("kind", |lua, this, val: Value| {
+            this.kind = lua.from_value(val)?;
             Ok(())
         });
     }
