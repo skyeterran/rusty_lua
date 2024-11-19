@@ -1,5 +1,5 @@
 use std::fs;
-use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function};
+use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function, Value};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(
@@ -17,13 +17,22 @@ struct Template {
 impl Default for Template {
     fn default() -> Self {
         Self {
-            name: None,
+            name: Some("Fucky".to_string()),
             components: Vec::new(),
         }
     }
 }
 
 impl UserData for Template {
+    fn add_fields<F: LuaUserDataFields<Self>>(fields: &mut F) {
+        fields.add_field_method_get("name", |lua, this| {
+            Ok(this.name.as_ref().map(|x| lua.create_string(x).unwrap()))
+        });
+        fields.add_field_method_set("name", |_, this, val: Value| {
+            this.name = val.as_string_lossy();
+            Ok(())
+        });
+    }
     fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
         methods.add_method_mut("add", |_, this, new: isize| {
             this.components.push(new);
@@ -64,6 +73,8 @@ pub fn construct_script<T: UserData + FromLua + DeserializeOwned>(path: &str) ->
     // Add our library table
     let library = Library;
     globals.set("library", library)?;
+
+    globals.set("test", lua.create_userdata(Template::default())?)?;
 
     // Actually run the Lua script
     lua.load(source).exec()?;
