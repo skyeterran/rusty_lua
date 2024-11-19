@@ -19,7 +19,7 @@ random = {
 }
 
 -- Called when the object is created
-function construct(self)
+function template(self)
     self.name = random.choice({
         "Lazer",
         "Salad",
