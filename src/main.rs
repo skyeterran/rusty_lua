@@ -121,14 +121,14 @@ impl Script {
             lua,
         })
     }
-    pub fn construct<T>(&self, name: &str) -> LuaResult<T>
+    pub fn construct<T>(&self) -> LuaResult<T>
     where
         T: Default + UserData + FromLua + 'static
     {
         // Evaluate its construct() function and get the result
         let globals = self.lua.globals();
         let object = self.lua.create_userdata(T::default())?;
-        let _: () = globals.get::<Function>(name)?.call(&object)?;
+        let _: () = globals.get::<Function>("construct")?.call(&object)?;
         let object: T = object.take()?; // Retrieve the "self" object
         Ok(object)
     }
@@ -137,7 +137,7 @@ impl Script {
 fn main() -> LuaResult<()> {
     let script = Script::new("template.luau")?;
     for _ in 0..10 {
-        let result: Template = script.construct("template")?;
+        let result: Template = script.construct()?;
         println!(
             "{}: {:?}",
             result.name.unwrap_or("_".to_string()),
