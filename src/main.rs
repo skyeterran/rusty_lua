@@ -65,7 +65,7 @@ impl UserData for Library {
 
 pub fn construct_script<T>(path: &str) -> LuaResult<T>
 where
-    T: UserData + FromLua + DeserializeOwned + 'static
+    T: Default + UserData + FromLua + DeserializeOwned + 'static
 {
     let source = fs::read_to_string(path).unwrap();
 
@@ -73,18 +73,16 @@ where
     let lua = Lua::new();
     let globals = lua.globals();
 
-    // Add our library table
+    // Always include our library
     let library = Library;
     globals.set("library", library)?;
 
-    globals.set("test", lua.create_userdata(Template::default())?)?;
-
     // Actually run the Lua script
+    // This gives us access to its functions, etc.
     lua.load(source).exec()?;
 
     // Evaluate its construct() function and get the result
-    //let construct: Function = globals.get("construct")?;
-    let object = lua.create_userdata(Template::default())?;
+    let object = lua.create_userdata(T::default())?;
     let _: () = globals.get::<Function>("construct")?.call(&object)?;
     let object: T = object.take()?; // Retrieve the "self" object
     Ok(object)
