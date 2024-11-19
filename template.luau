@@ -1,19 +1,26 @@
 --!nolint FunctionUnused
 math.randomseed(os.time())
+vec3 = vector.create
 normalize = vector.normalize
 
-function random(x)
-    return x[math.random(1, #x)]
-end
-
--- Helper function, maybe auto-include this?
-function vec3(x: number, y: number, z: number): vector
-    return vector.create(x, y, z)
-end
+random = {
+    choice = function(x: {any}): any
+        return x[math.random(1, #x)]
+    end,
+    unit_vector = function(): vector
+        return normalize(
+            vec3(
+                math.random(),
+                math.random(),
+                math.random()
+            )
+        )
+    end,
+}
 
 -- Called when the object is created
 function construct(self)
-    self.name = random({
+    self.name = random.choice({
         "Lazer",
         "Salad",
         "Sock",
@@ -21,14 +28,8 @@ function construct(self)
         "Zeelay",
     })
     --self.position = vec3(1.0, 0.0, 0.0)
-    self.position = normalize(
-        vec3(
-            math.random(),
-            math.random(),
-            math.random()
-        )
-    )
-    self.kind = random({
+    self.position = random.unit_vector()
+    self.kind = random.choice({
         "Human",
         "Alien",
         "Animal",

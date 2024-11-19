@@ -97,33 +97,53 @@ impl UserData for Template {
     }
 }
 
-pub fn construct_script<T>(path: &str) -> LuaResult<T>
-where
-    T: Default + UserData + FromLua + 'static
-{
-    let source = fs::read_to_string(path).unwrap();
-
-    // Create the Lua environment
-    let lua = Lua::new();
-    let globals = lua.globals();
-
-    // Always include our library
-    let library = Library;
-    globals.set("library", library)?;
-
-    // Actually run the Lua script
-    // This gives us access to its functions, etc.
-    lua.load(source).exec()?;
-
-    // Evaluate its construct() function and get the result
-    let object = lua.create_userdata(T::default())?;
-    let _: () = globals.get::<Function>("construct")?.call(&object)?;
-    let object: T = object.take()?; // Retrieve the "self" object
-    Ok(object)
+pub struct Prototype {
+    lua: Lua,
 }
 
+impl Prototype {
+    pub fn new(path: &str) -> LuaResult<Self> {
+        let source = fs::read_to_string(path).unwrap();
+
+        // Create the Lua environment
+        let lua = Lua::new();
+        let globals = lua.globals();
+
+        // Always include our library
+        let library = Library;
+        globals.set("library", library)?;
+
+        // Actually run the Lua script
+        // This gives us access to its functions, etc.
+        lua.load(source).exec()?;
+
+        Ok(Self {
+            lua,
+        })
+    }
+    pub fn construct<T>(&self) -> LuaResult<T>
+    where
+        T: Default + UserData + FromLua + 'static
+    {
+        // Evaluate its construct() function and get the result
+        let globals = self.lua.globals();
+        let object = self.lua.create_userdata(T::default())?;
+        let _: () = globals.get::<Function>("construct")?.call(&object)?;
+        let object: T = object.take()?; // Retrieve the "self" object
+        Ok(object)
+    }
+}
+
+
 fn main() -> LuaResult<()> {
-    let result: Template = construct_script("template.luau")?;
-    println!("{:?}", result);
+    let prototype = Prototype::new("template.luau")?;
+    for _ in 0..10 {
+        let result= prototype.construct::<Template>()?;
+        println!(
+            "{}: {:?}",
+            result.name.unwrap_or("_".to_string()),
+            result.kind
+        );
+    }
     Ok(())
 }
