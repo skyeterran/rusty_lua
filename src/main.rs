@@ -17,7 +17,7 @@ struct Template {
 impl Default for Template {
     fn default() -> Self {
         Self {
-            name: Some("Fucky".to_string()),
+            name: None,
             components: Vec::new(),
         }
     }
@@ -63,7 +63,10 @@ impl UserData for Library {
     }
 }
 
-pub fn construct_script<T: UserData + FromLua + DeserializeOwned>(path: &str) -> LuaResult<T> {
+pub fn construct_script<T>(path: &str) -> LuaResult<T>
+where
+    T: UserData + FromLua + DeserializeOwned + 'static
+{
     let source = fs::read_to_string(path).unwrap();
 
     // Create the Lua environment
@@ -79,11 +82,12 @@ pub fn construct_script<T: UserData + FromLua + DeserializeOwned>(path: &str) ->
     // Actually run the Lua script
     lua.load(source).exec()?;
 
-    // Evaluate its construct() function and get teh result
-    let construct: Function = globals.get("construct")?;
-    let result: T = lua.from_value(construct.call(())?)?;
-
-    Ok(result)
+    // Evaluate its construct() function and get the result
+    //let construct: Function = globals.get("construct")?;
+    let object = lua.create_userdata(Template::default())?;
+    let _: () = globals.get::<Function>("construct")?.call(&object)?;
+    let object: T = object.take()?; // Retrieve the "self" object
+    Ok(object)
 }
 
 fn main() -> LuaResult<()> {

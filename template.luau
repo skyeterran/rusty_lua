@@ -1,7 +1,4 @@
--- Construction function
-function construct()
-    return {
-        name = "Squishy",
-        components = {},
-    }
+-- Called when the object is created
+function construct(self)
+    self.name = "Greg"
 end
