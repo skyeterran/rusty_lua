@@ -97,11 +97,11 @@ impl UserData for Template {
     }
 }
 
-pub struct Prototype {
+pub struct Script {
     lua: Lua,
 }
 
-impl Prototype {
+impl Script {
     pub fn new(path: &str) -> LuaResult<Self> {
         let source = fs::read_to_string(path).unwrap();
 
@@ -136,9 +136,9 @@ impl Prototype {
 
 
 fn main() -> LuaResult<()> {
-    let prototype = Prototype::new("template.luau")?;
+    let script = Script::new("template.luau")?;
     for _ in 0..10 {
-        let result= prototype.construct::<Template>()?;
+        let result= script.construct::<Template>()?;
         println!(
             "{}: {:?}",
             result.name.unwrap_or("_".to_string()),
