@@ -1,49 +1,6 @@
 use std::fs;
-use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function, Value};
+use mlua::{prelude::*, UserData, FromLua, UserDataMethods, Function, Value, Vector};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-
-#[derive(
-    Serialize,
-    Deserialize,
-    Clone,
-    Debug,
-    FromLua,
-)]
-struct Template {
-    name: Option<String>,
-    components: Vec<isize>,
-}
-
-impl Default for Template {
-    fn default() -> Self {
-        Self {
-            name: None,
-            components: Vec::new(),
-        }
-    }
-}
-
-impl UserData for Template {
-    fn add_fields<F: LuaUserDataFields<Self>>(fields: &mut F) {
-        fields.add_field_method_get("name", |lua, this| {
-            Ok(this.name.as_ref().map(|x| lua.create_string(x).unwrap()))
-        });
-        fields.add_field_method_set("name", |_, this, val: Value| {
-            this.name = val.as_string_lossy();
-            Ok(())
-        });
-    }
-    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
-        methods.add_method_mut("add", |_, this, new: isize| {
-            this.components.push(new);
-            Ok(Self::default())
-        });
-        methods.add_method("debug", |_, this, ()| {
-            println!("{:?}", this);
-            Ok(())
-        });
-    }
-}
 
 #[derive(
     Serialize,
@@ -63,9 +20,61 @@ impl UserData for Library {
     }
 }
 
+#[derive(
+    Serialize,
+    Clone,
+    Debug,
+    FromLua,
+)]
+struct Template {
+    name: Option<String>,
+    components: Vec<isize>,
+    position: Vector,
+}
+
+impl Default for Template {
+    fn default() -> Self {
+        Self {
+            name: None,
+            components: Vec::new(),
+            position: Vector::new(0.0, 0.0, 0.0),
+        }
+    }
+}
+
+impl UserData for Template {
+    fn add_fields<F: LuaUserDataFields<Self>>(fields: &mut F) {
+        fields.add_field_method_get("name", |lua, this| {
+            Ok(this.name.as_ref().map(|x| lua.create_string(x).unwrap()))
+        });
+        fields.add_field_method_set("name", |_, this, val: Value| {
+            this.name = val.as_string_lossy();
+            Ok(())
+        });
+        fields.add_field_method_get("position", |lua, this| {
+            Ok(this.position)
+        });
+        fields.add_field_method_set("position", |_, this, val: Value| {
+            let Value::Vector(v) = val else { todo!() };
+            this.position = v;
+            Ok(())
+        });
+    }
+    fn add_methods<M: UserDataMethods<Self>>(methods: &mut M) {
+        methods.add_method_mut("add", |_, this, new: isize| {
+            this.components.push(new);
+            Ok(Self::default())
+        });
+        methods.add_method("debug", |_, this, ()| {
+            println!("{:?}", this);
+            Ok(())
+        });
+    }
+}
+
 pub fn construct_script<T>(path: &str) -> LuaResult<T>
 where
-    T: Default + UserData + FromLua + DeserializeOwned + 'static
+    T: Default + UserData + FromLua + 'static
 {
     let source = fs::read_to_string(path).unwrap();
 
