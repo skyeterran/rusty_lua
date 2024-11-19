@@ -69,7 +69,7 @@ impl UserData for Template {
             this.name = val.as_string_lossy();
             Ok(())
         });
-        fields.add_field_method_get("position", |lua, this| {
+        fields.add_field_method_get("position", |_, this| {
             Ok(this.position)
         });
         fields.add_field_method_set("position", |_, this, val: Value| {

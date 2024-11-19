@@ -1,5 +1,6 @@
 --!nolint FunctionUnused
 math.randomseed(os.time())
+normalize = vector.normalize
 
 function random(x)
     return x[math.random(1, #x)]
@@ -19,7 +20,14 @@ function construct(self)
         "Smores",
         "Zeelay",
     })
-    self.position = vec3(1.0, 0.0, 0.0)
+    --self.position = vec3(1.0, 0.0, 0.0)
+    self.position = normalize(
+        vec3(
+            math.random(),
+            math.random(),
+            math.random()
+        )
+    )
     self.kind = random({
         "Human",
         "Alien",
