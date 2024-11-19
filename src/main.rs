@@ -10,14 +10,14 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
     FromLua,
 )]
 struct Template {
-    name: String,
+    name: Option<String>,
     components: Vec<isize>,
 }
 
 impl Default for Template {
     fn default() -> Self {
         Self {
-            name: "None".to_string(),
+            name: None,
             components: Vec::new(),
         }
     }
@@ -54,7 +54,7 @@ impl UserData for Library {
     }
 }
 
-pub fn construct_script<T: UserData + FromLua + Default + DeserializeOwned>(path: &str) -> LuaResult<T> {
+pub fn construct_script<T: UserData + FromLua + DeserializeOwned>(path: &str) -> LuaResult<T> {
     let source = fs::read_to_string(path).unwrap();
 
     // Create the Lua environment
