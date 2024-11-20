@@ -27,7 +27,6 @@ function construct(self)
         "Smores",
         "Zeelay",
     })
-    --self.position = vec3(1.0, 0.0, 0.0)
     self.position = random.unit_vector()
     self.kind = random.choice({
         "Human",
