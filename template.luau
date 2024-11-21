@@ -34,5 +34,8 @@ function construct(self)
         "Animal",
         { Other = "Worm" },
         { Other = "Robot" },
+        { Other = "Puppy" },
+        { Other = "Slime" },
+        { Other = "Kitty" },
     })
 end
