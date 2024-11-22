@@ -28,14 +28,14 @@ function construct(self)
         "Zeelay",
     })
     self.position = random.unit_vector()
-    self.kind = random.choice({
+
+    possible_kinds = {
         "Human",
         "Alien",
         "Animal",
-        { Other = "Worm" },
-        { Other = "Robot" },
-        { Other = "Puppy" },
-        { Other = "Slime" },
-        { Other = "Kitty" },
-    })
+    }
+    for k, v in { "Worm", "Slime", "Puppy", "Kitty" } do
+        table.insert(possible_kinds, { Other = v })
+    end
+    self.kind = random.choice(possible_kinds)
 end
