@@ -6,13 +6,13 @@ local module = {
 }
 
 function module:say(text)
-    table.insert(module.lines, {
-        by = self.name,
-        text = text,
-    })
+    print(`{self.name}: {text}`)
+    coroutine.yield()
 end
 
+local input = nil
 function module.input(input)
+    input = input
     --[[
     for k, v in choices do
         if k == input then
@@ -25,6 +25,7 @@ function module.input(input)
 end
 
 function module.choice(args)
+    coroutine.yield("choice", args)
 end
 
 local shami = { name = "Shami" }
@@ -54,8 +55,19 @@ end
 
 module.convo = coroutine.create(start)
 
+local current_choice = nil
 function module.step()
-    coroutine.resume(module.convo)
+    if not current_choice then
+        local _, result, args = coroutine.resume(module.convo)
+        if result == "choice" then
+            current_choice = args
+            for k, _ in current_choice do
+                print(`- \"{k}\"`)
+            end
+        end
+    else
+        print(`-> Your choice: {input}`)
+    end
 end
 
 return module
