@@ -31,11 +31,13 @@ local function start()
             end,
             ["Sure"] = function()
                 shami("Thank you for your cooperation.")
+                shami("Disintegrating you would have been a pain...")
             end,
         }
     else
         shami("You seem trustworthy.")
     end
+    shami("Guess that's all! See you around.")
     -- Restart
     start()
 end
@@ -56,8 +58,10 @@ function module.step()
     else
         print(`-> Your choice: {module.input}`)
         for k, v in current_choice do
-            if k == module.input then
-                v()
+            if k == module.input then 
+                current_choice = nil
+                print("Executing choice...")
+                coroutine.create(v)
             end
         end
     end
