@@ -3,25 +3,12 @@ local module = {
     props = {
         has_contraband = true,
     },
+    input = nil,
 }
 
 function module:say(text)
     print(`{self.name}: {text}`)
-    coroutine.yield()
-end
-
-local input = nil
-function module.input(input)
-    input = input
-    --[[
-    for k, v in choices do
-        if k == input then
-            choosing = false
-            print(`-> Your choice: {k}`)
-            v()
-        end
-    end
-    ]]
+    coroutine.yield("line")
 end
 
 function module.choice(args)
@@ -39,10 +26,10 @@ local function start()
     if props.has_contraband then
         shami("Please leave any contraband in the bin.")
         module.choice{
-            ["Never!"] = function()
+            ["Never"] = function()
                 shami("Really? That's unwise.")
             end,
-            ["Sure, here."] = function()
+            ["Sure"] = function()
                 shami("Thank you for your cooperation.")
             end,
         }
@@ -61,12 +48,18 @@ function module.step()
         local _, result, args = coroutine.resume(module.convo)
         if result == "choice" then
             current_choice = args
+            print("Choose one:")
             for k, _ in current_choice do
-                print(`- \"{k}\"`)
+                print(`  - \"{k}\"`)
             end
         end
     else
-        print(`-> Your choice: {input}`)
+        print(`-> Your choice: {module.input}`)
+        for k, v in current_choice do
+            if k == module.input then
+                v()
+            end
+        end
     end
 end
 
