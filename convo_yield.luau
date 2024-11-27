@@ -40,12 +40,13 @@ local function start()
     start()
 end
 
-module.convo = coroutine.create(start)
-
+local coroutines = { coroutine.create(start) }
 local current_choice = nil
 function module.step()
     if not current_choice then
-        local _, result, args = coroutine.resume(module.convo)
+        local _, result, args = coroutine.resume(
+            coroutines[#coroutines]
+        )
         if result == "choice" then
             current_choice = args
             print("Choose one:")
@@ -57,7 +58,12 @@ function module.step()
         print(`-> Your choice: {module.input}`)
         for k, v in current_choice do
             if k == module.input then
-                v()
+                table.insert(
+                    coroutines,
+                    coroutine.create(function()
+                        v()
+                    end)
+                )
             end
         end
     end
