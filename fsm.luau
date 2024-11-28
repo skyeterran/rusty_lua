@@ -2,7 +2,7 @@ function say(x)
     coroutine.yield(x)
 end
 
-function step(fn)
+function run_path(fn)
     local path = coroutine.create(fn)
     while true do
         local alive, value = coroutine.resume(path)
@@ -11,7 +11,7 @@ function step(fn)
                 print(value)
             end
             if type(value) == "function" then
-                step(value)
+                run_path(value)
             end
         else
             break
